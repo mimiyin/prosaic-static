@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+  <?xml version="1.0" encoding="UTF-8"?>
+  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+		"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+
+  <script type=text/javascript src="./lib/jquery-ui-1.8.18.custom/js/jquery-1.7.1.min.js"></script>
+  <script type=text/javascript src="./lib/jquery-ui-1.8.18.custom/js/jquery-ui-1.8.18.custom.min.js"></script>
+  <script type=text/javascript src="./js/animate.js"></script>
+  <script type=text/javascript src="./js/scroll.js"></script>
+  <script type=text/javascript src="./js/queue.js"></script>
+
+
+  <link type="text/css" rel="stylesheet" href="./lib/jquery-ui-1.8.18.custom/css/smoothness/jquery-ui-1.8.18.custom.css" />
+  <link type="text/css" rel="stylesheet" href="./css/base.css" />
+
+  <title>Prosaic</title>
+</head>
+
+<body>
+  <div id='love' class='mode poem' file='love'>I WISH I LOVED YOU MORE</a></div>
+  <div id='see' class='mode poem' file='see'>WHEN I SEE</a></div>
+  </div>
+
+  <div id='controls'>
+    <div id='label'>PEEK UNDER THE HOOD</div>
+    <!-- <div id=about><a href=http://itp.nyu.edu/~yy600/blog/prosaic/ target=_blank>about</a></div> -->
+    <div id='0' class='control off' file='subqueued_0'>repeat</div>
+    <div id='1' class='control off' file='subqueued_1'>remix</div>
+    <div id='2' class='control off' file='subqueued_2'>stutter</div>
+    <div id='3' class='control off' file='subqueued_3'>elide</div>
+    <div id='4' class='control off' file='subqueued_4'>synonymize</div>
+    <div id='5' class='control off' file='subqueued_5'>alliterate</div>
+    <div id='6' class='control off' file='subqueued_6'>rhyme</div>
+  </div>
+  <script type=text/javascript>
+    // On reload, tell the server to kill all controls
+    var open = false;
+    var hood = true;
+    var crazy = false;
+    var reading = false;
+    var subQ = -1;
+
+    function updateControls(data) {
+      //console.log(data);
+      if (!data)
+        return;
+      $(".control").each(function(idx) {
+        if (data[idx] > 0) {
+          //console.log("SOMETHING IS ON!!!");
+          if (!open) {
+            openControls($("#controls"));
+            initHood();
+          }
+          $(this).toggleClass('on');
+        }
+      });
+    }
+
+    $("#controls").click(function(e) {
+      //if(open) hood = false;
+      //else hood = true;
+      if (!open) openControls($(this));
+      else closeControls($(this));
+    });
+
+    $(".control").click(function(e) {
+      e.stopPropagation();
+      crazy = false;
+      $(this).siblings().removeClass('on');
+      $(this).toggleClass('on');
+      fadeOutCounter();
+      let file = $(event.target).attr('file');
+      queue.reInit(-1, -1);
+      queue.getData(file);
+      //sendControls();
+    });
+
+    function openControls(elem) {
+      //console.log("OPEN SESAME");
+      //console.log(elem);
+      elem.animate({
+        right: 0,
+      }, 1000);
+      open = true;
+    }
+
+    function closeControls(elem) {
+      elem.animate({
+        right: -125,
+      }, 1000);
+      open = false;
+      // Closing the hood, turns off all controls
+      // Send new control status to the server
+      //if(!hood) {
+      $(".control").each(function(i, sendControls) {
+        $(this).removeClass('on');
+        $(this).addClass('off');
+      });
+      //}
+    }
+
+    function sendControls() {
+      var controls = {};
+
+      $(".control").each(function(idx) {
+
+        if ($(this).hasClass('on')) {
+          subQ = idx;
+          controls[idx] = 1;
+
+          // Turn off the reading and reset it to the beginning
+          if (reading) {
+            stop();
+            reading = false;
+          }
+        } else controls[idx] = 0;
+      });
+
+      //Re-Check hood status after every click
+      hood = false;
+
+      $.each(controls, function(c, control) {
+        if (control > 0) hood = true;
+      });
+
+      initHood(subQ, -1);
+
+      //queueWrapper('controls', function(){ console.log("SENT!")}, controls);
+    }
+
+    function initHood(subQ, preQ, file) {
+      queue.reInit(subQ, preQ);
+      if(file) queue.getData(file);
+    }
+
+    function fadeOutCounter() {
+      setTimeout(function() {
+        $(".count").fadeOut("slow");
+        $(".ywp-container").fadeOut("slow");
+      }, 500);
+    }
+
+    queue.getData('love');
+
+    $(".poem").click(function(){
+      hood = false;
+      crazy = $(event.target).attr("id") == "see";
+      reading = false;
+      closeControls($("#controls"));
+      fadeOutCounter();
+      initHood(-1, -1, $(event.target).attr("file"));
+
+    });
+
+  </script>
+</body>
+
+</html>
